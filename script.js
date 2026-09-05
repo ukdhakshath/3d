@@ -35,14 +35,19 @@ let hotspots = [];
 
 let modelReady = false;
 
+let isARActive = false;
+
 
 /* =====================================================
-   LOAD HOTSPOT JSON
+   INITIALIZE
 ===================================================== */
 
 async function initialize() {
 
     try {
+
+        console.log("Loading hotspot JSON...");
+
 
         const response =
             await fetch(
@@ -56,7 +61,7 @@ async function initialize() {
         if (!response.ok) {
 
             throw new Error(
-                "Could not load printer-hotspots.json"
+                `Hotspot JSON error: ${response.status}`
             );
 
         }
@@ -67,17 +72,21 @@ async function initialize() {
 
 
         console.log(
-            "✅ Hotspots JSON loaded:",
+            "✅ Hotspots loaded:",
             hotspots
         );
 
+
+        /* =============================================
+           FEATURE LIST
+        ============================================= */
 
         renderFeatureList();
 
 
         /*
-            If model has already loaded,
-            create hotspots immediately.
+            Sometimes the model may already
+            be loaded before JSON finishes.
         */
 
         if (
@@ -85,7 +94,7 @@ async function initialize() {
             modelReady
         ) {
 
-            refreshHotspots();
+            renderHotspots();
 
         }
 
@@ -106,7 +115,7 @@ async function initialize() {
         featureList.innerHTML =
             `
             <div class="loading-message">
-                Could not load product features.
+                Product features could not be loaded.
             </div>
             `;
 
@@ -114,6 +123,10 @@ async function initialize() {
 
 }
 
+
+/* =====================================================
+   START
+===================================================== */
 
 initialize();
 
@@ -134,7 +147,16 @@ modelViewer.addEventListener(
         modelReady = true;
 
 
-        refreshHotspots();
+        /*
+            Create hotspots only in
+            normal 3D mode.
+        */
+
+        if (!isARActive) {
+
+            renderHotspots();
+
+        }
 
     }
 );
@@ -149,7 +171,7 @@ modelViewer.addEventListener(
     (event) => {
 
         console.error(
-            "❌ Model error:",
+            "❌ 3D model error:",
             event
         );
 
@@ -162,22 +184,31 @@ modelViewer.addEventListener(
 
 
 /* =====================================================
-   REFRESH HOTSPOTS
-
-   IMPORTANT:
-   Used after returning from AR.
+   RENDER HOTSPOTS
 ===================================================== */
 
-function refreshHotspots() {
+function renderHotspots() {
 
-    console.log(
-        "🔄 Refreshing hotspots..."
-    );
+    /*
+        Do not show hotspots while
+        AR is active.
+    */
+
+    if (isARActive) {
+
+        console.log(
+            "AR active. Hotspots will not be rendered."
+        );
+
+        return;
+
+    }
 
 
     /*
-        Remove ONLY dynamically
-        generated hotspot elements.
+        Remove old generated hotspots.
+
+        This prevents duplicates.
     */
 
     modelViewer
@@ -185,8 +216,11 @@ function refreshHotspots() {
             ".generated-hotspot"
         )
         .forEach(
-            element =>
-                element.remove()
+            (element) => {
+
+                element.remove();
+
+            }
         );
 
 
@@ -204,50 +238,34 @@ function refreshHotspots() {
 
 
     /*
-        Wait for model-viewer to finish
-        returning to normal rendering.
-
-        This is especially useful when
-        coming back from Android AR.
+        Create all hotspots from JSON.
     */
 
-    requestAnimationFrame(
-        () => {
+    hotspots.forEach(
+        (hotspot, index) => {
 
-            requestAnimationFrame(
-                () => {
-
-                    hotspots.forEach(
-                        (hotspot, index) => {
-
-                            createHotspot(
-                                hotspot,
-                                index
-                            );
-
-                        }
-                    );
-
-
-                    hotspotStatus.textContent =
-                        `${hotspots.length} features`;
-
-
-                    console.log(
-                        `✅ ${hotspots.length} hotspots visible`
-                    );
-
-                }
+            createHotspot(
+                hotspot,
+                index
             );
 
         }
+    );
+
+
+    hotspotStatus.textContent =
+        `${hotspots.length} features`;
+
+
+    console.log(
+        `✅ ${hotspots.length} hotspots rendered`
     );
 
 }
 
 
 /* =====================================================
-   CREATE ONE HOTSPOT
+   CREATE HOTSPOT
 ===================================================== */
 
 function createHotspot(
@@ -265,21 +283,23 @@ function createHotspot(
         "hotspot generated-hotspot";
 
 
+    button.type =
+        "button";
+
+
     /*
-        Unique slot is required.
+        Every model-viewer hotspot
+        needs a unique slot.
     */
 
     button.slot =
         `hotspot-${index + 1}`;
 
 
-    button.type =
-        "button";
-
-
     button.setAttribute(
         "aria-label",
-        hotspot.name || "Product feature"
+        hotspot.name ||
+        `Feature ${index + 1}`
     );
 
 
@@ -287,9 +307,7 @@ function createHotspot(
        POSITION
     ================================================= */
 
-    if (
-        hotspot.position
-    ) {
+    if (hotspot.position) {
 
         button.setAttribute(
             "data-position",
@@ -303,9 +321,7 @@ function createHotspot(
        NORMAL
     ================================================= */
 
-    if (
-        hotspot.normal
-    ) {
+    if (hotspot.normal) {
 
         button.setAttribute(
             "data-normal",
@@ -318,13 +334,11 @@ function createHotspot(
     /* =================================================
        SURFACE
 
-       Use exact surface data generated
-       from Hotspot Editor.
+       Exact surface information created
+       by your Hotspot Editor.
     ================================================= */
 
-    if (
-        hotspot.surface
-    ) {
+    if (hotspot.surface) {
 
         button.setAttribute(
             "data-surface",
@@ -335,7 +349,7 @@ function createHotspot(
 
 
     /* =================================================
-       DOT
+       HOTSPOT DOT
     ================================================= */
 
     const dot =
@@ -349,7 +363,7 @@ function createHotspot(
 
 
     /* =================================================
-       LABEL
+       HOTSPOT LABEL
     ================================================= */
 
     const label =
@@ -390,6 +404,20 @@ function createHotspot(
             event.stopPropagation();
 
 
+            /*
+                Safety:
+
+                Hotspot should do nothing
+                if AR is active.
+            */
+
+            if (isARActive) {
+
+                return;
+
+            }
+
+
             openFeature(
                 hotspot
             );
@@ -398,13 +426,169 @@ function createHotspot(
     );
 
 
-    /*
-        Add hotspot back to
-        <model-viewer>
-    */
+    /* =================================================
+       ADD TO MODEL VIEWER
+    ================================================= */
 
     modelViewer.appendChild(
         button
+    );
+
+}
+
+
+/* =====================================================
+   HIDE HOTSPOTS
+
+   Called when entering AR.
+===================================================== */
+
+function hideHotspots() {
+
+    console.log(
+        "🙈 Hiding hotspots"
+    );
+
+
+    modelViewer
+        .querySelectorAll(
+            ".generated-hotspot"
+        )
+        .forEach(
+            (hotspot) => {
+
+                hotspot.style.display =
+                    "none";
+
+            }
+        );
+
+
+    hotspotStatus.textContent =
+        "AR Mode";
+
+}
+
+
+/* =====================================================
+   SHOW HOTSPOTS
+
+   Called after returning from AR.
+===================================================== */
+
+function showHotspots() {
+
+    /*
+        Don't show if AR is
+        actually still running.
+    */
+
+    if (isARActive) {
+
+        return;
+
+    }
+
+
+    console.log(
+        "👁 Showing hotspots"
+    );
+
+
+    const existingHotspots =
+        modelViewer.querySelectorAll(
+            ".generated-hotspot"
+        );
+
+
+    /*
+        If hotspots somehow disappeared
+        during AR, rebuild them.
+    */
+
+    if (
+        existingHotspots.length !==
+        hotspots.length
+    ) {
+
+        console.log(
+            "Some hotspots missing. Rebuilding..."
+        );
+
+
+        renderHotspots();
+
+        return;
+
+    }
+
+
+    /*
+        Otherwise simply show them again.
+    */
+
+    existingHotspots.forEach(
+        (hotspot) => {
+
+            hotspot.style.display =
+                "flex";
+
+        }
+    );
+
+
+    hotspotStatus.textContent =
+        `${hotspots.length} features`;
+
+}
+
+
+/* =====================================================
+   RESTORE AFTER AR
+
+   Android Scene Viewer may need a small
+   amount of time before model-viewer is
+   ready again.
+===================================================== */
+
+function restoreNormalView() {
+
+    console.log(
+        "⬅ Restoring normal 3D view"
+    );
+
+
+    isARActive =
+        false;
+
+
+    /*
+        First attempt.
+    */
+
+    setTimeout(
+        () => {
+
+            showHotspots();
+
+        },
+        300
+    );
+
+
+    /*
+        Second fallback.
+
+        Useful on slower phones.
+    */
+
+    setTimeout(
+        () => {
+
+            showHotspots();
+
+        },
+        700
     );
 
 }
@@ -473,6 +657,18 @@ function renderFeatureList() {
                 "click",
                 () => {
 
+                    /*
+                        Feature list also
+                        shouldn't work in AR.
+                    */
+
+                    if (isARActive) {
+
+                        return;
+
+                    }
+
+
                     openFeature(
                         hotspot
                     );
@@ -492,31 +688,44 @@ function renderFeatureList() {
 
 
 /* =====================================================
-   OPEN FEATURE
+   OPEN FEATURE VIDEO
 ===================================================== */
 
 function openFeature(
     hotspot
 ) {
 
+    /*
+        Extra AR protection.
+    */
+
+    if (isARActive) {
+
+        return;
+
+    }
+
+
     console.log(
-        "Opening:",
+        "Opening feature:",
         hotspot.name
     );
 
 
-    if (
-        !hotspot.video
-    ) {
+    if (!hotspot.video) {
 
         alert(
-            `${hotspot.name}\n\nNo video assigned.`
+            `${hotspot.name}\n\nNo video assigned for this feature.`
         );
 
         return;
 
     }
 
+
+    /*
+        Stop previous video.
+    */
 
     hotspotVideo.pause();
 
@@ -525,6 +734,10 @@ function openFeature(
         0;
 
 
+    /*
+        Set new video.
+    */
+
     videoSource.src =
         hotspot.video;
 
@@ -532,20 +745,34 @@ function openFeature(
     hotspotVideo.load();
 
 
+    /*
+        Set title.
+    */
+
     videoTitle.textContent =
         hotspot.name ||
         "Product Feature";
 
+
+    /*
+        Open modal.
+    */
 
     videoModal.classList.add(
         "show"
     );
 
 
+    /*
+        Try to play.
+
+        Some browsers may block autoplay.
+    */
+
     hotspotVideo
         .play()
         .catch(
-            error => {
+            (error) => {
 
                 console.log(
                     "Video autoplay blocked:",
@@ -578,15 +805,23 @@ function closeVideoModal() {
 }
 
 
+/* =====================================================
+   CLOSE BUTTON
+===================================================== */
+
 closeVideo.addEventListener(
     "click",
     closeVideoModal
 );
 
 
+/* =====================================================
+   CLICK OUTSIDE VIDEO
+===================================================== */
+
 videoModal.addEventListener(
     "click",
-    event => {
+    (event) => {
 
         if (
             event.target ===
@@ -601,9 +836,13 @@ videoModal.addEventListener(
 );
 
 
+/* =====================================================
+   ESC KEY
+===================================================== */
+
 document.addEventListener(
     "keydown",
-    event => {
+    (event) => {
 
         if (
             event.key ===
@@ -621,12 +860,12 @@ document.addEventListener(
 /* =====================================================
    AR STATUS
 
-   Works for WebXR AR.
+   Mainly used for WebXR.
 ===================================================== */
 
 modelViewer.addEventListener(
     "ar-status",
-    event => {
+    (event) => {
 
         const status =
             event.detail.status;
@@ -638,20 +877,44 @@ modelViewer.addEventListener(
         );
 
 
+        /* =============================================
+           AR STARTED
+        ============================================= */
+
         if (
             status ===
             "session-started"
         ) {
 
+            console.log(
+                "📱 Entered AR"
+            );
+
+
+            isARActive =
+                true;
+
+
+            /*
+                Video should never remain
+                open while entering AR.
+            */
+
             closeVideoModal();
+
+
+            /*
+                Hide all normal 3D hotspots.
+            */
+
+            hideHotspots();
 
         }
 
 
-        /*
-            When WebXR returns to
-            normal 3D mode.
-        */
+        /* =============================================
+           RETURNED FROM WEBXR AR
+        ============================================= */
 
         if (
             status ===
@@ -659,24 +922,30 @@ modelViewer.addEventListener(
         ) {
 
             console.log(
-                "⬅ Returned from WebXR AR"
+                "⬅ AR stopped"
             );
 
 
-            /*
-                Small delay gives
-                model-viewer time to
-                restore its normal renderer.
-            */
+            restoreNormalView();
 
-            setTimeout(
-                () => {
+        }
 
-                    refreshHotspots();
 
-                },
-                250
+        /* =============================================
+           AR FAILED
+        ============================================= */
+
+        if (
+            status ===
+            "failed"
+        ) {
+
+            console.log(
+                "AR failed / cancelled"
             );
+
+
+            restoreNormalView();
 
         }
 
@@ -687,13 +956,13 @@ modelViewer.addEventListener(
 /* =====================================================
    PAGE VISIBILITY
 
-   VERY IMPORTANT FOR ANDROID SCENE VIEWER.
+   IMPORTANT FOR ANDROID SCENE VIEWER.
 
-   Scene Viewer can leave the browser
-   and open Google's external AR viewer.
+   Android may open Scene Viewer outside
+   Chrome.
 
-   When user presses Back and returns
-   to Chrome, this event runs.
+   When user returns to Chrome,
+   visibility becomes "visible".
 ===================================================== */
 
 document.addEventListener(
@@ -701,10 +970,37 @@ document.addEventListener(
     () => {
 
         console.log(
-            "Page visibility:",
+            "Visibility:",
             document.visibilityState
         );
 
+
+        /* =============================================
+           LEFT BROWSER FOR EXTERNAL AR
+        ============================================= */
+
+        if (
+            document.visibilityState ===
+            "hidden"
+        ) {
+
+            /*
+                We don't automatically assume
+                every hidden event means AR.
+
+                But if model-viewer has just
+                launched Scene Viewer, hiding
+                hotspots is harmless.
+            */
+
+            closeVideoModal();
+
+        }
+
+
+        /* =============================================
+           RETURNED TO BROWSER
+        ============================================= */
 
         if (
             document.visibilityState ===
@@ -712,18 +1008,11 @@ document.addEventListener(
         ) {
 
             console.log(
-                "⬅ Page visible again"
+                "⬅ Browser visible again"
             );
 
 
-            setTimeout(
-                () => {
-
-                    refreshHotspots();
-
-                },
-                350
-            );
+            restoreNormalView();
 
         }
 
@@ -734,30 +1023,42 @@ document.addEventListener(
 /* =====================================================
    WINDOW FOCUS
 
-   Extra Android fallback.
-
-   Some devices return focus without
-   behaving exactly the same way with
-   visibilitychange.
+   Additional Android fallback.
 ===================================================== */
 
 window.addEventListener(
     "focus",
     () => {
 
+        /*
+            Ignore initial focus before
+            model is ready.
+        */
+
+        if (!modelReady) {
+
+            return;
+
+        }
+
+
         console.log(
-            "⬅ Window focused again"
+            "⬅ Browser focused"
         );
 
 
-        setTimeout(
-            () => {
+        /*
+            Only restore if page is visible.
+        */
 
-                refreshHotspots();
+        if (
+            document.visibilityState ===
+            "visible"
+        ) {
 
-            },
-            350
-        );
+            restoreNormalView();
+
+        }
 
     }
 );
@@ -766,34 +1067,34 @@ window.addEventListener(
 /* =====================================================
    PAGE SHOW
 
-   Handles browser restoring page
-   from back/forward cache.
+   Handles Chrome restoring the webpage
+   from its back/forward cache.
 ===================================================== */
 
 window.addEventListener(
     "pageshow",
     () => {
 
+        if (!modelReady) {
+
+            return;
+
+        }
+
+
         console.log(
             "📄 Page shown"
         );
 
 
-        setTimeout(
-            () => {
+        if (
+            document.visibilityState ===
+            "visible"
+        ) {
 
-                if (
-                    modelViewer.loaded ||
-                    modelReady
-                ) {
+            restoreNormalView();
 
-                    refreshHotspots();
-
-                }
-
-            },
-            250
-        );
+        }
 
     }
 );
@@ -814,18 +1115,22 @@ function escapeHTML(
             "&",
             "&amp;"
         )
+
         .replaceAll(
             "<",
             "&lt;"
         )
+
         .replaceAll(
             ">",
             "&gt;"
         )
+
         .replaceAll(
             '"',
             "&quot;"
         )
+
         .replaceAll(
             "'",
             "&#039;"
