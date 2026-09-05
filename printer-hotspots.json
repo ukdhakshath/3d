@@ -1,0 +1,34 @@
+[
+  {
+    "id": "hotspot-1788613097075",
+    "name": "Paper tray",
+    "video": "./videos/hotspot1.mp4",
+    "position": "0.125571m 0.597721m 1.260410m",
+    "normal": "0.037190m -0.999308m 0.000000m",
+    "surface": "9 0 644 832 819 -2.130 0.289 2.841"
+  },
+  {
+    "id": "hotspot-1788613195788",
+    "name": "Drawer",
+    "video": "./videos/hotspot1.mp4",
+    "position": "0.143810m 0.387477m 1.084944m",
+    "normal": "0.000000m 0.000000m -1.000000m",
+    "surface": "0 0 3 40 35 1.205 0.086 -0.291"
+  },
+  {
+    "id": "hotspot-1788613453122",
+    "name": "simple",
+    "video": "./videos/hotspot1.mp4",
+    "position": "-0.014292m 0.412581m 1.328855m",
+    "normal": "0.000000m 0.000000m 1.000000m",
+    "surface": "1 0 66 380 128 -1.044 19.955 -17.910"
+  },
+  {
+    "id": "hotspot-1788613500538",
+    "name": "sample",
+    "video": "./videos/hotspot1.mp4",
+    "position": "0.067463m 0.356647m 1.492855m",
+    "normal": "0.000000m 0.000000m 1.000000m",
+    "surface": "27 0 120 145 157 -0.997 1.610 0.387"
+  }
+]

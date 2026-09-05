@@ -4,167 +4,239 @@
 <head>
     <meta charset="UTF-8">
 
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0">
 
-    <title>Printer AR Demo</title>
+    <title>Printer Product Viewer</title>
 
-    <!-- Model Viewer -->
+    <!-- Google Model Viewer -->
     <script
         type="module"
         src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js">
     </script>
 
-    <!-- CSS -->
-    <link rel="stylesheet" href="./style.css">
-
+    <link
+        rel="stylesheet"
+        href="./style.css">
 </head>
+
 
 <body>
 
-    <div class="container">
+    <main class="page">
 
         <!-- HEADER -->
-        <div class="header">
 
-            <h1>Printer AR Demo</h1>
+        <section class="header">
 
-            <p>
-                Explore the printer in 3D, view feature videos,
-                and experience it in AR.
-            </p>
+            <div>
 
-        </div>
+                <p class="eyebrow">
+                    DIGITAL PRODUCT CATALOGUE
+                </p>
 
+                <h1>
+                    Printer Product View
+                </h1>
 
-        <!-- 3D MODEL -->
+                <p class="subtitle">
+                    Rotate the printer, zoom in,
+                    and tap the red hotspots to
+                    explore product features.
+                </p>
 
-        <model-viewer
-            id="printerModel"
-            src="./models/printer.glb"
-            alt="3D Printer Model"
+            </div>
 
-            camera-controls
-            touch-action="pan-y"
-
-            shadow-intensity="1"
-            exposure="1"
-
-            camera-orbit="45deg 70deg 105%"
-
-            ar
-            ar-modes="webxr scene-viewer quick-look"
-            ar-placement="floor">
+        </section>
 
 
-            <!-- HOTSPOT 1 -->
+        <!-- MODEL CARD -->
 
-            <button
-                class="hotspot"
-                slot="hotspot-1"
-                data-position="-0.25m 0.45m 0.35m"
-                data-normal="0m 0m 1m"
-                data-video="./videos/hotspot1.mp4"
-                aria-label="Paper Tray">
+        <section class="viewer-card">
 
-                <span class="hotspot-dot"></span>
+            <div class="viewer-header">
 
-            </button>
+                <div>
 
+                    <p class="section-label">
+                        INTERACTIVE 3D
+                    </p>
 
-            <!-- HOTSPOT 2 -->
+                    <h2>
+                        Printer Overview
+                    </h2>
 
-            <button
-                class="hotspot"
-                slot="hotspot-2"
-                data-position="0.30m 0.35m 0.30m"
-                data-normal="0m 0m 1m"
-                data-video="./videos/hotspot2.mp4"
-                aria-label="Control Panel">
-
-                <span class="hotspot-dot"></span>
-
-            </button>
+                </div>
 
 
-            <!-- HOTSPOT 3 -->
+                <div
+                    id="hotspotStatus"
+                    class="status-badge">
 
-            <button
-                class="hotspot"
-                slot="hotspot-3"
-                data-position="-0.10m 0.05m 0.45m"
-                data-normal="0m 0m 1m"
-                data-video="./videos/hotspot3.mp4"
-                aria-label="Output Tray">
+                    Loading hotspots...
 
-                <span class="hotspot-dot"></span>
+                </div>
 
-            </button>
+            </div>
 
 
-            <!-- AR BUTTON -->
+            <!-- 3D MODEL -->
 
-            <button
-                slot="ar-button"
-                class="ar-button">
+            <model-viewer
 
-                📱 View in AR
+                id="printerModel"
 
-            </button>
+                src="./models/printer.glb"
 
+                alt="3D Printer Model"
 
-        </model-viewer>
+                camera-controls
 
+                touch-action="pan-y"
 
-        <!-- INSTRUCTIONS -->
+                shadow-intensity="1"
 
-        <div class="instructions">
+                exposure="1"
 
-            <h2>How to Use</h2>
+                camera-orbit="45deg 70deg 105%"
 
-            <ol>
-                <li>Rotate the printer using your mouse or finger.</li>
+                auto-rotate-delay="5000"
 
-                <li>Zoom in and zoom out.</li>
+                ar
 
-                <li>Click a red hotspot to watch a feature video.</li>
+                ar-modes="webxr scene-viewer quick-look"
 
-                <li>Click View in AR on a supported mobile device.</li>
-            </ol>
-
-        </div>
-
-    </div>
+                ar-placement="floor">
 
 
-    <!-- VIDEO MODAL -->
+                <!-- AR BUTTON -->
+
+                <button
+                    slot="ar-button"
+                    class="ar-button">
+
+                    📱 View in AR
+
+                </button>
+
+            </model-viewer>
+
+
+            <!-- USER HELP -->
+
+            <div class="help-row">
+
+                <div>
+                    ↔ Drag to rotate
+                </div>
+
+                <div>
+                    🔍 Scroll / pinch to zoom
+                </div>
+
+                <div>
+                    🔴 Tap hotspot for details
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- FEATURE LIST -->
+
+        <section class="feature-section">
+
+            <div class="feature-header">
+
+                <div>
+
+                    <p class="section-label">
+                        PRODUCT FEATURES
+                    </p>
+
+                    <h2>
+                        Explore Features
+                    </h2>
+
+                </div>
+
+            </div>
+
+
+            <div
+                id="featureList"
+                class="feature-list">
+
+                <div class="loading-message">
+                    Loading product features...
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+
+
+    <!-- =====================================================
+         VIDEO MODAL
+    ====================================================== -->
 
     <div
         id="videoModal"
         class="video-modal">
 
-        <div class="video-container">
+
+        <div class="video-card">
+
 
             <button
                 id="closeVideo"
-                class="close-video"
-                aria-label="Close video">
+                class="close-button"
+                aria-label="Close">
 
                 ✕
 
             </button>
 
 
+            <div class="video-heading">
+
+                <p class="section-label">
+                    FEATURE VIDEO
+                </p>
+
+                <h2
+                    id="videoTitle">
+
+                    Product Feature
+
+                </h2>
+
+            </div>
+
+
             <video
+
                 id="hotspotVideo"
+
                 controls
+
                 playsinline>
 
                 <source
+
                     id="videoSource"
+
                     src=""
+
                     type="video/mp4">
 
-                Your browser does not support video playback.
+                Your browser does not
+                support video playback.
 
             </video>
 
@@ -173,9 +245,9 @@
     </div>
 
 
-    <!-- JAVASCRIPT -->
-
-    <script src="./script.js"></script>
+    <script
+        src="./script.js">
+    </script>
 
 </body>
 

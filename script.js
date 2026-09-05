@@ -1,226 +1,582 @@
-/* =========================
-   GET ELEMENTS
-========================= */
+/* =====================================================
+   ELEMENTS
+===================================================== */
 
 const modelViewer =
-    document.querySelector("#printerModel");
+    document.querySelector(
+        "#printerModel"
+    );
+
+
+const hotspotStatus =
+    document.querySelector(
+        "#hotspotStatus"
+    );
+
+
+const featureList =
+    document.querySelector(
+        "#featureList"
+    );
+
 
 const videoModal =
-    document.querySelector("#videoModal");
+    document.querySelector(
+        "#videoModal"
+    );
+
 
 const hotspotVideo =
-    document.querySelector("#hotspotVideo");
+    document.querySelector(
+        "#hotspotVideo"
+    );
+
 
 const videoSource =
-    document.querySelector("#videoSource");
+    document.querySelector(
+        "#videoSource"
+    );
+
+
+const videoTitle =
+    document.querySelector(
+        "#videoTitle"
+    );
+
 
 const closeVideo =
-    document.querySelector("#closeVideo");
-
-const hotspots =
-    document.querySelectorAll(".hotspot");
-
+    document.querySelector(
+        "#closeVideo"
+    );
 
 
-/* =========================
+/* =====================================================
+   HOTSPOT DATA
+===================================================== */
+
+let hotspots =
+    [];
+
+
+/* =====================================================
+   START
+===================================================== */
+
+async function initialize() {
+
+    try {
+
+        /*
+            Load the exported JSON created
+            using your Hotspot Editor.
+        */
+
+        const response =
+            await fetch(
+                "./printer-hotspots.json"
+            );
+
+
+        if (
+            !response.ok
+        ) {
+
+            throw new Error(
+                "Could not load hotspot JSON."
+            );
+
+        }
+
+
+        hotspots =
+            await response.json();
+
+
+        console.log(
+            "Hotspots loaded:",
+            hotspots
+        );
+
+
+        /*
+            Wait for model-viewer model
+            before adding hotspot DOM.
+        */
+
+        if (
+            modelViewer.loaded
+        ) {
+
+            renderHotspots();
+
+        }
+
+
+        renderFeatureList();
+
+    } catch (
+        error
+    ) {
+
+        console.error(
+            "Hotspot loading error:",
+            error
+        );
+
+
+        hotspotStatus.textContent =
+            "Hotspots unavailable";
+
+
+        featureList.innerHTML =
+            `
+            <div class="loading-message">
+                Product hotspot information
+                could not be loaded.
+            </div>
+            `;
+
+    }
+
+}
+
+
+initialize();
+
+
+/* =====================================================
    MODEL LOADED
-========================= */
+===================================================== */
 
 modelViewer.addEventListener(
     "load",
     () => {
 
         console.log(
-            "3D Model Loaded Successfully"
+            "✅ Printer model loaded"
         );
+
+
+        renderHotspots();
 
     }
 );
 
 
-
-/* =========================
+/* =====================================================
    MODEL ERROR
-========================= */
+===================================================== */
 
 modelViewer.addEventListener(
     "error",
     (event) => {
 
         console.error(
-            "3D Model Error:",
+            "3D model error:",
             event
         );
 
+
+        hotspotStatus.textContent =
+            "Model error";
+
     }
 );
 
 
+/* =====================================================
+   RENDER HOTSPOTS
+===================================================== */
 
-/* =========================
-   AR STATUS
-========================= */
+function renderHotspots() {
 
-/*
-    When AR starts:
+    /*
+        Remove any previously generated
+        hotspot buttons first.
+    */
 
-    - Hide all hotspots
-    - Close video if open
-*/
-
-modelViewer.addEventListener(
-    "ar-status",
-    (event) => {
-
-        const status =
-            event.detail.status;
-
-
-        console.log(
-            "AR Status:",
-            status
+    modelViewer
+        .querySelectorAll(
+            ".generated-hotspot"
+        )
+        .forEach(
+            (element) =>
+                element.remove()
         );
 
 
-        /* =========================
-           AR SESSION STARTED
-        ========================= */
+    if (
+        hotspots.length ===
+        0
+    ) {
 
-        if (
-            status === "session-started"
-        ) {
+        hotspotStatus.textContent =
+            "No hotspots";
 
-            /* Hide hotspots */
-
-            hotspots.forEach(
-                (hotspot) => {
-
-                    hotspot.style.display =
-                        "none";
-
-                }
-            );
+        return;
+    }
 
 
-            /* Close video modal */
+    hotspots.forEach(
+        (
+            hotspot,
+            index
+        ) => {
 
-            closeVideoModal();
-
-        }
-
-
-        /* =========================
-           AR SESSION ENDED
-        ========================= */
-
-        if (
-            status === "not-presenting"
-        ) {
-
-            /* Show hotspots again */
-
-            hotspots.forEach(
-                (hotspot) => {
-
-                    hotspot.style.display =
-                        "";
-
-                }
+            createHotspot(
+                hotspot,
+                index
             );
 
         }
+    );
+
+
+    hotspotStatus.textContent =
+        `${hotspots.length} features`;
+
+}
+
+
+/* =====================================================
+   CREATE HOTSPOT
+===================================================== */
+
+function createHotspot(
+    hotspot,
+    index
+) {
+
+    const button =
+        document.createElement(
+            "button"
+        );
+
+
+    button.className =
+        "hotspot generated-hotspot";
+
+
+    /*
+        Important:
+
+        Each hotspot requires
+        its own unique slot.
+    */
+
+    button.slot =
+        `hotspot-${index + 1}`;
+
+
+    button.setAttribute(
+        "aria-label",
+        hotspot.name
+    );
+
+
+    /*
+        Position + normal are kept.
+
+        They are a reliable fallback
+        even when surface isn't available.
+    */
+
+    if (
+        hotspot.position
+    ) {
+
+        button.setAttribute(
+            "data-position",
+            hotspot.position
+        );
 
     }
-);
 
 
+    if (
+        hotspot.normal
+    ) {
 
-/* =========================
-   HOTSPOT CLICK
-========================= */
+        button.setAttribute(
+            "data-normal",
+            hotspot.normal
+        );
 
-hotspots.forEach(
-    (hotspot) => {
-
-        hotspot.addEventListener(
-            "click",
-            () => {
-
-                const videoPath =
-                    hotspot.dataset.video;
+    }
 
 
-                console.log(
-                    "Hotspot clicked:",
-                    videoPath
+    /*
+        Prefer exact surface attachment.
+
+        This was generated using the
+        Hotspot Editor.
+    */
+
+    if (
+        hotspot.surface
+    ) {
+
+        button.setAttribute(
+            "data-surface",
+            hotspot.surface
+        );
+
+    }
+
+
+    /* =========================
+       DOT
+    ========================= */
+
+    const dot =
+        document.createElement(
+            "span"
+        );
+
+
+    dot.className =
+        "hotspot-dot";
+
+
+    /* =========================
+       LABEL
+    ========================= */
+
+    const label =
+        document.createElement(
+            "span"
+        );
+
+
+    label.className =
+        "hotspot-label";
+
+
+    label.textContent =
+        hotspot.name;
+
+
+    button.appendChild(
+        dot
+    );
+
+
+    button.appendChild(
+        label
+    );
+
+
+    /* =========================
+       CLICK
+    ========================= */
+
+    button.addEventListener(
+        "click",
+        (
+            event
+        ) => {
+
+            /*
+                Don't let click interfere
+                with model rotation.
+            */
+
+            event.stopPropagation();
+
+
+            openFeature(
+                hotspot
+            );
+
+        }
+    );
+
+
+    modelViewer.appendChild(
+        button
+    );
+
+}
+
+
+/* =====================================================
+   FEATURE LIST
+===================================================== */
+
+function renderFeatureList() {
+
+    if (
+        hotspots.length ===
+        0
+    ) {
+
+        featureList.innerHTML =
+            `
+            <div class="loading-message">
+                No product features available.
+            </div>
+            `;
+
+        return;
+    }
+
+
+    featureList.innerHTML =
+        "";
+
+
+    hotspots.forEach(
+        (
+            hotspot,
+            index
+        ) => {
+
+            const card =
+                document.createElement(
+                    "div"
                 );
 
 
-                /* Stop old video */
-
-                hotspotVideo.pause();
-
-                hotspotVideo.currentTime = 0;
+            card.className =
+                "feature-card";
 
 
-                /* Set selected video */
+            card.innerHTML =
+                `
+                <div class="feature-number">
+                    ${index + 1}
+                </div>
 
-                videoSource.src =
-                    videoPath;
+                <div class="feature-name">
+                    ${escapeHTML(
+                        hotspot.name
+                    )}
+                </div>
+
+                <div class="feature-action">
+                    View feature →
+                </div>
+                `;
 
 
-                /* Reload video */
+            card.addEventListener(
+                "click",
+                () => {
 
-                hotspotVideo.load();
-
-
-                /* Open modal */
-
-                videoModal.classList.add(
-                    "show"
-                );
-
-
-                /* Play video */
-
-                hotspotVideo
-                    .play()
-                    .catch(
-                        (error) => {
-
-                            console.log(
-                                "Autoplay blocked:",
-                                error
-                            );
-
-                        }
+                    openFeature(
+                        hotspot
                     );
 
-            }
+                }
+            );
+
+
+            featureList.appendChild(
+                card
+            );
+
+        }
+    );
+
+}
+
+
+/* =====================================================
+   OPEN FEATURE VIDEO
+===================================================== */
+
+function openFeature(
+    hotspot
+) {
+
+    console.log(
+        "Opening hotspot:",
+        hotspot.name
+    );
+
+
+    if (
+        !hotspot.video
+    ) {
+
+        alert(
+            `${hotspot.name}\n\nNo video is assigned for this feature.`
         );
 
+        return;
     }
-);
 
 
-
-/* =========================
-   CLOSE VIDEO FUNCTION
-========================= */
-
-function closeVideoModal() {
-
-    /* Pause video */
+    /*
+        Stop previously playing video.
+    */
 
     hotspotVideo.pause();
 
 
-    /* Reset video */
+    hotspotVideo.currentTime =
+        0;
 
-    hotspotVideo.currentTime = 0;
+
+    /*
+        Load selected video.
+    */
+
+    videoSource.src =
+        hotspot.video;
 
 
-    /* Close modal */
+    hotspotVideo.load();
+
+
+    /*
+        Modal title.
+    */
+
+    videoTitle.textContent =
+        hotspot.name;
+
+
+    videoModal.classList.add(
+        "show"
+    );
+
+
+    /*
+        Try autoplay.
+
+        Browser may block autoplay,
+        but controls are still available.
+    */
+
+    hotspotVideo
+        .play()
+        .catch(
+            (error) => {
+
+                console.log(
+                    "Autoplay blocked:",
+                    error
+                );
+
+            }
+        );
+
+}
+
+
+/* =====================================================
+   CLOSE VIDEO
+===================================================== */
+
+function closeVideoModal() {
+
+    hotspotVideo.pause();
+
+
+    hotspotVideo.currentTime =
+        0;
+
 
     videoModal.classList.remove(
         "show"
@@ -229,28 +585,21 @@ function closeVideoModal() {
 }
 
 
-
-/* =========================
-   CLOSE BUTTON
-========================= */
-
 closeVideo.addEventListener(
     "click",
     closeVideoModal
 );
 
 
-
-/* =========================
-   CLICK OUTSIDE VIDEO
-========================= */
-
 videoModal.addEventListener(
     "click",
-    (event) => {
+    (
+        event
+    ) => {
 
         if (
-            event.target === videoModal
+            event.target ===
+            videoModal
         ) {
 
             closeVideoModal();
@@ -260,18 +609,16 @@ videoModal.addEventListener(
     }
 );
 
-
-
-/* =========================
-   ESC KEY
-========================= */
 
 document.addEventListener(
     "keydown",
-    (event) => {
+    (
+        event
+    ) => {
 
         if (
-            event.key === "Escape"
+            event.key ===
+            "Escape"
         ) {
 
             closeVideoModal();
@@ -280,3 +627,76 @@ document.addEventListener(
 
     }
 );
+
+
+/* =====================================================
+   AR STATUS
+===================================================== */
+
+modelViewer.addEventListener(
+    "ar-status",
+    (
+        event
+    ) => {
+
+        const status =
+            event.detail.status;
+
+
+        console.log(
+            "AR status:",
+            status
+        );
+
+
+        /*
+            Close video if user
+            enters AR.
+        */
+
+        if (
+            status ===
+            "session-started"
+        ) {
+
+            closeVideoModal();
+
+        }
+
+    }
+);
+
+
+/* =====================================================
+   SAFE HTML
+===================================================== */
+
+function escapeHTML(
+    value
+) {
+
+    return String(
+        value
+    )
+        .replaceAll(
+            "&",
+            "&amp;"
+        )
+        .replaceAll(
+            "<",
+            "&lt;"
+        )
+        .replaceAll(
+            ">",
+            "&gt;"
+        )
+        .replaceAll(
+            '"',
+            "&quot;"
+        )
+        .replaceAll(
+            "'",
+            "&#039;"
+        );
+
+}
