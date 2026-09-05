@@ -3,86 +3,60 @@
 ===================================================== */
 
 const modelViewer =
-    document.querySelector(
-        "#printerModel"
-    );
-
+    document.querySelector("#printerModel");
 
 const hotspotStatus =
-    document.querySelector(
-        "#hotspotStatus"
-    );
-
+    document.querySelector("#hotspotStatus");
 
 const featureList =
-    document.querySelector(
-        "#featureList"
-    );
-
+    document.querySelector("#featureList");
 
 const videoModal =
-    document.querySelector(
-        "#videoModal"
-    );
-
+    document.querySelector("#videoModal");
 
 const hotspotVideo =
-    document.querySelector(
-        "#hotspotVideo"
-    );
-
+    document.querySelector("#hotspotVideo");
 
 const videoSource =
-    document.querySelector(
-        "#videoSource"
-    );
-
+    document.querySelector("#videoSource");
 
 const videoTitle =
-    document.querySelector(
-        "#videoTitle"
-    );
-
+    document.querySelector("#videoTitle");
 
 const closeVideo =
-    document.querySelector(
-        "#closeVideo"
-    );
+    document.querySelector("#closeVideo");
 
 
 /* =====================================================
-   HOTSPOT DATA
+   STATE
 ===================================================== */
 
-let hotspots =
-    [];
+let hotspots = [];
+
+let modelReady = false;
 
 
 /* =====================================================
-   START
+   LOAD HOTSPOT JSON
 ===================================================== */
 
 async function initialize() {
 
     try {
 
-        /*
-            Load the exported JSON created
-            using your Hotspot Editor.
-        */
-
         const response =
             await fetch(
-                "./printer-hotspots.json"
+                "./printer-hotspots.json",
+                {
+                    cache: "no-store"
+                }
             );
 
 
-        if (
-            !response.ok
-        ) {
+        if (!response.ok) {
 
             throw new Error(
-                "Could not load hotspot JSON."
+                "Could not load printer-hotspots.json"
             );
 
         }
@@ -93,33 +67,34 @@ async function initialize() {
 
 
         console.log(
-            "Hotspots loaded:",
+            "✅ Hotspots JSON loaded:",
             hotspots
         );
 
 
+        renderFeatureList();
+
+
         /*
-            Wait for model-viewer model
-            before adding hotspot DOM.
+            If model has already loaded,
+            create hotspots immediately.
         */
 
         if (
-            modelViewer.loaded
+            modelViewer.loaded ||
+            modelReady
         ) {
 
-            renderHotspots();
+            refreshHotspots();
 
         }
 
+    }
 
-        renderFeatureList();
-
-    } catch (
-        error
-    ) {
+    catch (error) {
 
         console.error(
-            "Hotspot loading error:",
+            "❌ Hotspot loading error:",
             error
         );
 
@@ -131,8 +106,7 @@ async function initialize() {
         featureList.innerHTML =
             `
             <div class="loading-message">
-                Product hotspot information
-                could not be loaded.
+                Could not load product features.
             </div>
             `;
 
@@ -157,7 +131,10 @@ modelViewer.addEventListener(
         );
 
 
-        renderHotspots();
+        modelReady = true;
+
+
+        refreshHotspots();
 
     }
 );
@@ -172,7 +149,7 @@ modelViewer.addEventListener(
     (event) => {
 
         console.error(
-            "3D model error:",
+            "❌ Model error:",
             event
         );
 
@@ -185,14 +162,22 @@ modelViewer.addEventListener(
 
 
 /* =====================================================
-   RENDER HOTSPOTS
+   REFRESH HOTSPOTS
+
+   IMPORTANT:
+   Used after returning from AR.
 ===================================================== */
 
-function renderHotspots() {
+function refreshHotspots() {
+
+    console.log(
+        "🔄 Refreshing hotspots..."
+    );
+
 
     /*
-        Remove any previously generated
-        hotspot buttons first.
+        Remove ONLY dynamically
+        generated hotspot elements.
     */
 
     modelViewer
@@ -200,46 +185,69 @@ function renderHotspots() {
             ".generated-hotspot"
         )
         .forEach(
-            (element) =>
+            element =>
                 element.remove()
         );
 
 
     if (
-        hotspots.length ===
-        0
+        !hotspots ||
+        hotspots.length === 0
     ) {
 
         hotspotStatus.textContent =
             "No hotspots";
 
         return;
+
     }
 
 
-    hotspots.forEach(
-        (
-            hotspot,
-            index
-        ) => {
+    /*
+        Wait for model-viewer to finish
+        returning to normal rendering.
 
-            createHotspot(
-                hotspot,
-                index
+        This is especially useful when
+        coming back from Android AR.
+    */
+
+    requestAnimationFrame(
+        () => {
+
+            requestAnimationFrame(
+                () => {
+
+                    hotspots.forEach(
+                        (hotspot, index) => {
+
+                            createHotspot(
+                                hotspot,
+                                index
+                            );
+
+                        }
+                    );
+
+
+                    hotspotStatus.textContent =
+                        `${hotspots.length} features`;
+
+
+                    console.log(
+                        `✅ ${hotspots.length} hotspots visible`
+                    );
+
+                }
             );
 
         }
     );
 
-
-    hotspotStatus.textContent =
-        `${hotspots.length} features`;
-
 }
 
 
 /* =====================================================
-   CREATE HOTSPOT
+   CREATE ONE HOTSPOT
 ===================================================== */
 
 function createHotspot(
@@ -258,28 +266,26 @@ function createHotspot(
 
 
     /*
-        Important:
-
-        Each hotspot requires
-        its own unique slot.
+        Unique slot is required.
     */
 
     button.slot =
         `hotspot-${index + 1}`;
 
 
+    button.type =
+        "button";
+
+
     button.setAttribute(
         "aria-label",
-        hotspot.name
+        hotspot.name || "Product feature"
     );
 
 
-    /*
-        Position + normal are kept.
-
-        They are a reliable fallback
-        even when surface isn't available.
-    */
+    /* =================================================
+       POSITION
+    ================================================= */
 
     if (
         hotspot.position
@@ -293,6 +299,10 @@ function createHotspot(
     }
 
 
+    /* =================================================
+       NORMAL
+    ================================================= */
+
     if (
         hotspot.normal
     ) {
@@ -305,12 +315,12 @@ function createHotspot(
     }
 
 
-    /*
-        Prefer exact surface attachment.
+    /* =================================================
+       SURFACE
 
-        This was generated using the
-        Hotspot Editor.
-    */
+       Use exact surface data generated
+       from Hotspot Editor.
+    ================================================= */
 
     if (
         hotspot.surface
@@ -324,9 +334,9 @@ function createHotspot(
     }
 
 
-    /* =========================
+    /* =================================================
        DOT
-    ========================= */
+    ================================================= */
 
     const dot =
         document.createElement(
@@ -338,9 +348,9 @@ function createHotspot(
         "hotspot-dot";
 
 
-    /* =========================
+    /* =================================================
        LABEL
-    ========================= */
+    ================================================= */
 
     const label =
         document.createElement(
@@ -353,7 +363,8 @@ function createHotspot(
 
 
     label.textContent =
-        hotspot.name;
+        hotspot.name ||
+        `Feature ${index + 1}`;
 
 
     button.appendChild(
@@ -366,20 +377,15 @@ function createHotspot(
     );
 
 
-    /* =========================
-       CLICK
-    ========================= */
+    /* =================================================
+       HOTSPOT CLICK
+    ================================================= */
 
     button.addEventListener(
         "click",
-        (
-            event
-        ) => {
+        (event) => {
 
-            /*
-                Don't let click interfere
-                with model rotation.
-            */
+            event.preventDefault();
 
             event.stopPropagation();
 
@@ -391,6 +397,11 @@ function createHotspot(
         }
     );
 
+
+    /*
+        Add hotspot back to
+        <model-viewer>
+    */
 
     modelViewer.appendChild(
         button
@@ -406,8 +417,8 @@ function createHotspot(
 function renderFeatureList() {
 
     if (
-        hotspots.length ===
-        0
+        !hotspots ||
+        hotspots.length === 0
     ) {
 
         featureList.innerHTML =
@@ -418,6 +429,7 @@ function renderFeatureList() {
             `;
 
         return;
+
     }
 
 
@@ -426,10 +438,7 @@ function renderFeatureList() {
 
 
     hotspots.forEach(
-        (
-            hotspot,
-            index
-        ) => {
+        (hotspot, index) => {
 
             const card =
                 document.createElement(
@@ -449,7 +458,8 @@ function renderFeatureList() {
 
                 <div class="feature-name">
                     ${escapeHTML(
-                        hotspot.name
+                        hotspot.name ||
+                        `Feature ${index + 1}`
                     )}
                 </div>
 
@@ -482,7 +492,7 @@ function renderFeatureList() {
 
 
 /* =====================================================
-   OPEN FEATURE VIDEO
+   OPEN FEATURE
 ===================================================== */
 
 function openFeature(
@@ -490,7 +500,7 @@ function openFeature(
 ) {
 
     console.log(
-        "Opening hotspot:",
+        "Opening:",
         hotspot.name
     );
 
@@ -500,16 +510,13 @@ function openFeature(
     ) {
 
         alert(
-            `${hotspot.name}\n\nNo video is assigned for this feature.`
+            `${hotspot.name}\n\nNo video assigned.`
         );
 
         return;
+
     }
 
-
-    /*
-        Stop previously playing video.
-    */
 
     hotspotVideo.pause();
 
@@ -518,10 +525,6 @@ function openFeature(
         0;
 
 
-    /*
-        Load selected video.
-    */
-
     videoSource.src =
         hotspot.video;
 
@@ -529,12 +532,9 @@ function openFeature(
     hotspotVideo.load();
 
 
-    /*
-        Modal title.
-    */
-
     videoTitle.textContent =
-        hotspot.name;
+        hotspot.name ||
+        "Product Feature";
 
 
     videoModal.classList.add(
@@ -542,20 +542,13 @@ function openFeature(
     );
 
 
-    /*
-        Try autoplay.
-
-        Browser may block autoplay,
-        but controls are still available.
-    */
-
     hotspotVideo
         .play()
         .catch(
-            (error) => {
+            error => {
 
                 console.log(
-                    "Autoplay blocked:",
+                    "Video autoplay blocked:",
                     error
                 );
 
@@ -593,9 +586,7 @@ closeVideo.addEventListener(
 
 videoModal.addEventListener(
     "click",
-    (
-        event
-    ) => {
+    event => {
 
         if (
             event.target ===
@@ -612,9 +603,7 @@ videoModal.addEventListener(
 
 document.addEventListener(
     "keydown",
-    (
-        event
-    ) => {
+    event => {
 
         if (
             event.key ===
@@ -631,28 +620,23 @@ document.addEventListener(
 
 /* =====================================================
    AR STATUS
+
+   Works for WebXR AR.
 ===================================================== */
 
 modelViewer.addEventListener(
     "ar-status",
-    (
-        event
-    ) => {
+    event => {
 
         const status =
             event.detail.status;
 
 
         console.log(
-            "AR status:",
+            "📱 AR status:",
             status
         );
 
-
-        /*
-            Close video if user
-            enters AR.
-        */
 
         if (
             status ===
@@ -662,6 +646,154 @@ modelViewer.addEventListener(
             closeVideoModal();
 
         }
+
+
+        /*
+            When WebXR returns to
+            normal 3D mode.
+        */
+
+        if (
+            status ===
+            "not-presenting"
+        ) {
+
+            console.log(
+                "⬅ Returned from WebXR AR"
+            );
+
+
+            /*
+                Small delay gives
+                model-viewer time to
+                restore its normal renderer.
+            */
+
+            setTimeout(
+                () => {
+
+                    refreshHotspots();
+
+                },
+                250
+            );
+
+        }
+
+    }
+);
+
+
+/* =====================================================
+   PAGE VISIBILITY
+
+   VERY IMPORTANT FOR ANDROID SCENE VIEWER.
+
+   Scene Viewer can leave the browser
+   and open Google's external AR viewer.
+
+   When user presses Back and returns
+   to Chrome, this event runs.
+===================================================== */
+
+document.addEventListener(
+    "visibilitychange",
+    () => {
+
+        console.log(
+            "Page visibility:",
+            document.visibilityState
+        );
+
+
+        if (
+            document.visibilityState ===
+            "visible"
+        ) {
+
+            console.log(
+                "⬅ Page visible again"
+            );
+
+
+            setTimeout(
+                () => {
+
+                    refreshHotspots();
+
+                },
+                350
+            );
+
+        }
+
+    }
+);
+
+
+/* =====================================================
+   WINDOW FOCUS
+
+   Extra Android fallback.
+
+   Some devices return focus without
+   behaving exactly the same way with
+   visibilitychange.
+===================================================== */
+
+window.addEventListener(
+    "focus",
+    () => {
+
+        console.log(
+            "⬅ Window focused again"
+        );
+
+
+        setTimeout(
+            () => {
+
+                refreshHotspots();
+
+            },
+            350
+        );
+
+    }
+);
+
+
+/* =====================================================
+   PAGE SHOW
+
+   Handles browser restoring page
+   from back/forward cache.
+===================================================== */
+
+window.addEventListener(
+    "pageshow",
+    () => {
+
+        console.log(
+            "📄 Page shown"
+        );
+
+
+        setTimeout(
+            () => {
+
+                if (
+                    modelViewer.loaded ||
+                    modelReady
+                ) {
+
+                    refreshHotspots();
+
+                }
+
+            },
+            250
+        );
 
     }
 );
