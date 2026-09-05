@@ -5,22 +5,17 @@
 const modelViewer =
     document.querySelector("#printerModel");
 
-
 const videoModal =
     document.querySelector("#videoModal");
-
 
 const hotspotVideo =
     document.querySelector("#hotspotVideo");
 
-
 const videoSource =
     document.querySelector("#videoSource");
 
-
 const closeVideo =
     document.querySelector("#closeVideo");
-
 
 const hotspots =
     document.querySelectorAll(".hotspot");
@@ -63,6 +58,84 @@ modelViewer.addEventListener(
 
 
 /* =========================
+   AR STATUS
+========================= */
+
+/*
+    When AR starts:
+
+    - Hide all hotspots
+    - Close video if open
+*/
+
+modelViewer.addEventListener(
+    "ar-status",
+    (event) => {
+
+        const status =
+            event.detail.status;
+
+
+        console.log(
+            "AR Status:",
+            status
+        );
+
+
+        /* =========================
+           AR SESSION STARTED
+        ========================= */
+
+        if (
+            status === "session-started"
+        ) {
+
+            /* Hide hotspots */
+
+            hotspots.forEach(
+                (hotspot) => {
+
+                    hotspot.style.display =
+                        "none";
+
+                }
+            );
+
+
+            /* Close video modal */
+
+            closeVideoModal();
+
+        }
+
+
+        /* =========================
+           AR SESSION ENDED
+        ========================= */
+
+        if (
+            status === "not-presenting"
+        ) {
+
+            /* Show hotspots again */
+
+            hotspots.forEach(
+                (hotspot) => {
+
+                    hotspot.style.display =
+                        "";
+
+                }
+            );
+
+        }
+
+    }
+);
+
+
+
+/* =========================
    HOTSPOT CLICK
 ========================= */
 
@@ -77,6 +150,12 @@ hotspots.forEach(
                     hotspot.dataset.video;
 
 
+                console.log(
+                    "Hotspot clicked:",
+                    videoPath
+                );
+
+
                 /* Stop old video */
 
                 hotspotVideo.pause();
@@ -84,7 +163,7 @@ hotspots.forEach(
                 hotspotVideo.currentTime = 0;
 
 
-                /* Set new video */
+                /* Set selected video */
 
                 videoSource.src =
                     videoPath;
@@ -126,15 +205,22 @@ hotspots.forEach(
 
 
 /* =========================
-   CLOSE VIDEO
+   CLOSE VIDEO FUNCTION
 ========================= */
 
 function closeVideoModal() {
 
+    /* Pause video */
+
     hotspotVideo.pause();
+
+
+    /* Reset video */
 
     hotspotVideo.currentTime = 0;
 
+
+    /* Close modal */
 
     videoModal.classList.remove(
         "show"
