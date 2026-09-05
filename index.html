@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  />
+
+  <title>Printer AR Demo</title>
+
+  <!-- Google Model Viewer -->
+  <script
+    type="module"
+    src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js">
+  </script>
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+
+  <div class="container">
+
+    <!-- Header -->
+    <div class="header">
+      <h1>Printer AR Demo</h1>
+
+      <p>
+        View the printer in 3D and place it in your environment using AR.
+      </p>
+    </div>
+
+
+    <!-- 3D MODEL VIEWER -->
+
+    <model-viewer
+      id="printerModel"
+
+      src="./models/printer.glb"
+
+      ios-src="./models/printer.usdz"
+
+      alt="3D Printer Model"
+
+      ar
+
+      ar-modes="webxr scene-viewer quick-look"
+
+      ar-placement="floor"
+
+      camera-controls
+
+      touch-action="pan-y"
+
+      auto-rotate
+
+      shadow-intensity="1"
+
+      exposure="1"
+
+      camera-orbit="45deg 70deg 105%">
+
+      <!-- Loading Indicator -->
+
+      <div class="loading" slot="poster">
+        Loading 3D Model...
+      </div>
+
+      <!-- AR Button -->
+
+      <button slot="ar-button" class="ar-button">
+
+        📱 View in AR
+
+      </button>
+
+    </model-viewer>
+
+
+    <!-- Instructions -->
+
+    <div class="instructions">
+
+      <h2>How to Use</h2>
+
+      <ol>
+
+        <li>Rotate the printer using your finger.</li>
+
+        <li>Zoom in and zoom out using pinch gestures.</li>
+
+        <li>Click <strong>View in AR</strong>.</li>
+
+        <li>Move your phone slowly to detect the floor.</li>
+
+        <li>Place the printer in your environment.</li>
+
+      </ol>
+
+    </div>
+
+  </div>
+
+
+  <script src="script.js"></script>
+
+</body>
+</html>
