@@ -1,110 +1,182 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="UTF-8" />
+    <meta charset="UTF-8">
 
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
-  />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <title>Printer AR Demo</title>
+    <title>Printer AR Demo</title>
 
-  <!-- Google Model Viewer -->
-  <script
-    type="module"
-    src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js">
-  </script>
+    <!-- Model Viewer -->
+    <script
+        type="module"
+        src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js">
+    </script>
 
-  <link rel="stylesheet" href="style.css" />
+    <!-- CSS -->
+    <link rel="stylesheet" href="./style.css">
+
 </head>
 
 <body>
 
-  <div class="container">
+    <div class="container">
 
-    <!-- Header -->
-    <div class="header">
-      <h1>Printer AR Demo</h1>
+        <!-- HEADER -->
+        <div class="header">
 
-      <p>
-        View the printer in 3D and place it in your environment using AR.
-      </p>
+            <h1>Printer AR Demo</h1>
+
+            <p>
+                Explore the printer in 3D, view feature videos,
+                and experience it in AR.
+            </p>
+
+        </div>
+
+
+        <!-- 3D MODEL -->
+
+        <model-viewer
+            id="printerModel"
+            src="./models/printer.glb"
+            alt="3D Printer Model"
+
+            camera-controls
+            touch-action="pan-y"
+
+            shadow-intensity="1"
+            exposure="1"
+
+            camera-orbit="45deg 70deg 105%"
+
+            ar
+            ar-modes="webxr scene-viewer quick-look"
+            ar-placement="floor">
+
+
+            <!-- HOTSPOT 1 -->
+
+            <button
+                class="hotspot"
+                slot="hotspot-1"
+                data-position="-0.25m 0.45m 0.35m"
+                data-normal="0m 0m 1m"
+                data-video="./videos/hotspot1.mp4"
+                aria-label="Paper Tray">
+
+                <span class="hotspot-dot"></span>
+
+            </button>
+
+
+            <!-- HOTSPOT 2 -->
+
+            <button
+                class="hotspot"
+                slot="hotspot-2"
+                data-position="0.30m 0.35m 0.30m"
+                data-normal="0m 0m 1m"
+                data-video="./videos/hotspot2.mp4"
+                aria-label="Control Panel">
+
+                <span class="hotspot-dot"></span>
+
+            </button>
+
+
+            <!-- HOTSPOT 3 -->
+
+            <button
+                class="hotspot"
+                slot="hotspot-3"
+                data-position="-0.10m 0.05m 0.45m"
+                data-normal="0m 0m 1m"
+                data-video="./videos/hotspot3.mp4"
+                aria-label="Output Tray">
+
+                <span class="hotspot-dot"></span>
+
+            </button>
+
+
+            <!-- AR BUTTON -->
+
+            <button
+                slot="ar-button"
+                class="ar-button">
+
+                📱 View in AR
+
+            </button>
+
+
+        </model-viewer>
+
+
+        <!-- INSTRUCTIONS -->
+
+        <div class="instructions">
+
+            <h2>How to Use</h2>
+
+            <ol>
+                <li>Rotate the printer using your mouse or finger.</li>
+
+                <li>Zoom in and zoom out.</li>
+
+                <li>Click a red hotspot to watch a feature video.</li>
+
+                <li>Click View in AR on a supported mobile device.</li>
+            </ol>
+
+        </div>
+
     </div>
 
 
-    <!-- 3D MODEL VIEWER -->
+    <!-- VIDEO MODAL -->
 
-    <model-viewer
-      id="printerModel"
+    <div
+        id="videoModal"
+        class="video-modal">
 
-      src="./models/printer.glb"
+        <div class="video-container">
 
-      ios-src="./models/printer.usdz"
+            <button
+                id="closeVideo"
+                class="close-video"
+                aria-label="Close video">
 
-      alt="3D Printer Model"
+                ✕
 
-      ar
-
-      ar-modes="webxr scene-viewer quick-look"
-
-      ar-placement="floor"
-
-      camera-controls
-
-      touch-action="pan-y"
-
-      auto-rotate
-
-      shadow-intensity="1"
-
-      exposure="1"
-
-      camera-orbit="45deg 70deg 105%">
-
-      <!-- Loading Indicator -->
-
-      <div class="loading" slot="poster">
-        Loading 3D Model...
-      </div>
-
-      <!-- AR Button -->
-
-      <button slot="ar-button" class="ar-button">
-
-        📱 View in AR
-
-      </button>
-
-    </model-viewer>
+            </button>
 
 
-    <!-- Instructions -->
+            <video
+                id="hotspotVideo"
+                controls
+                playsinline>
 
-    <div class="instructions">
+                <source
+                    id="videoSource"
+                    src=""
+                    type="video/mp4">
 
-      <h2>How to Use</h2>
+                Your browser does not support video playback.
 
-      <ol>
+            </video>
 
-        <li>Rotate the printer using your finger.</li>
-
-        <li>Zoom in and zoom out using pinch gestures.</li>
-
-        <li>Click <strong>View in AR</strong>.</li>
-
-        <li>Move your phone slowly to detect the floor.</li>
-
-        <li>Place the printer in your environment.</li>
-
-      </ol>
+        </div>
 
     </div>
 
-  </div>
 
+    <!-- JAVASCRIPT -->
 
-  <script src="script.js"></script>
+    <script src="./script.js"></script>
 
 </body>
+
 </html>

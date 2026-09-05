@@ -1,183 +1,382 @@
+/* =========================
+   GLOBAL
+========================= */
+
 * {
-  box-sizing: border-box;
+    box-sizing: border-box;
 }
+
 
 body {
+    margin: 0;
 
-  margin: 0;
+    font-family: Arial, sans-serif;
 
-  font-family: Arial, sans-serif;
+    background: #f4f6f8;
 
-  background: #f4f6f8;
-
-  color: #222;
-
+    color: #222;
 }
 
+
+/* =========================
+   MAIN CONTAINER
+========================= */
 
 .container {
+    width: 100%;
 
-  width: 100%;
+    max-width: 1000px;
 
-  max-width: 900px;
+    margin: auto;
 
-  margin: auto;
-
-  padding: 20px;
-
+    padding: 20px;
 }
 
 
+/* =========================
+   HEADER
+========================= */
+
 .header {
+    text-align: center;
 
-  text-align: center;
-
-  margin-bottom: 20px;
-
+    margin-bottom: 20px;
 }
 
 
 .header h1 {
+    margin-bottom: 10px;
 
-  margin-bottom: 10px;
-
-  font-size: 28px;
-
+    font-size: 28px;
 }
 
 
 .header p {
+    color: #666;
 
-  color: #666;
-
-  line-height: 1.5;
-
+    line-height: 1.5;
 }
 
 
-/* 3D Viewer */
+/* =========================
+   MODEL VIEWER
+========================= */
 
 model-viewer {
 
-  width: 100%;
+    width: 100%;
 
-  height: 500px;
+    height: 550px;
 
-  background: white;
+    background: white;
 
-  border-radius: 16px;
+    border-radius: 16px;
 
-  box-shadow:
-    0 4px 15px rgba(0, 0, 0, 0.12);
+    box-shadow:
+        0 4px 15px rgba(0, 0, 0, 0.12);
+
+    overflow: hidden;
+}
+
+
+/* =========================
+   HOTSPOT BUTTON
+========================= */
+
+.hotspot {
+
+    width: 22px;
+
+    height: 22px;
+
+    padding: 0;
+
+    border: none;
+
+    background: transparent;
+
+    cursor: pointer;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+}
+
+
+/* =========================
+   RED DOT
+========================= */
+
+.hotspot-dot {
+
+    width: 12px;
+
+    height: 12px;
+
+    background: red;
+
+    border: 2px solid white;
+
+    border-radius: 50%;
+
+    display: block;
+
+    box-shadow:
+        0 0 5px rgba(255, 0, 0, 0.7);
+
+    transition:
+        transform 0.2s ease;
+}
+
+
+/* =========================
+   HOVER
+========================= */
+
+.hotspot:hover .hotspot-dot {
+
+    transform:
+        scale(1.5);
 
 }
 
 
-/* AR Button */
+/* =========================
+   AR BUTTON
+========================= */
 
 .ar-button {
 
-  background: #111;
+    position: absolute;
 
-  color: white;
+    bottom: 20px;
 
-  border: none;
+    left: 50%;
 
-  border-radius: 10px;
+    transform:
+        translateX(-50%);
 
-  padding: 14px 22px;
+    padding:
+        14px 24px;
 
-  font-size: 16px;
+    border: none;
 
-  font-weight: bold;
+    border-radius: 10px;
 
-  cursor: pointer;
+    background: #111;
 
-  margin-bottom: 20px;
+    color: white;
+
+    font-size: 16px;
+
+    font-weight: bold;
+
+    cursor: pointer;
+
+    box-shadow:
+        0 4px 10px rgba(0, 0, 0, 0.2);
 
 }
 
 
 .ar-button:hover {
 
-  opacity: 0.85;
+    opacity: 0.85;
 
 }
 
 
-/* Loading */
-
-.loading {
-
-  display: flex;
-
-  align-items: center;
-
-  justify-content: center;
-
-  width: 100%;
-
-  height: 100%;
-
-  font-size: 18px;
-
-}
-
-
-/* Instructions */
+/* =========================
+   INSTRUCTIONS
+========================= */
 
 .instructions {
 
-  background: white;
+    background: white;
 
-  margin-top: 20px;
+    margin-top: 20px;
 
-  padding: 20px;
+    padding: 20px;
 
-  border-radius: 12px;
+    border-radius: 12px;
 
-  box-shadow:
-    0 4px 12px rgba(0, 0, 0, 0.08);
+    box-shadow:
+        0 4px 12px rgba(0, 0, 0, 0.08);
 
 }
 
 
 .instructions h2 {
 
-  margin-top: 0;
+    margin-top: 0;
 
 }
 
 
 .instructions li {
 
-  margin-bottom: 10px;
+    margin-bottom: 10px;
 
-  line-height: 1.5;
+    line-height: 1.5;
 
 }
 
 
-/* Mobile */
+/* =========================
+   VIDEO MODAL
+========================= */
+
+.video-modal {
+
+    display: none;
+
+    position: fixed;
+
+    z-index: 9999;
+
+    left: 0;
+
+    top: 0;
+
+    width: 100%;
+
+    height: 100%;
+
+    background:
+        rgba(0, 0, 0, 0.85);
+
+    align-items: center;
+
+    justify-content: center;
+
+}
+
+
+.video-modal.show {
+
+    display: flex;
+
+}
+
+
+/* =========================
+   VIDEO CONTAINER
+========================= */
+
+.video-container {
+
+    position: relative;
+
+    width: 90%;
+
+    max-width: 850px;
+
+}
+
+
+/* =========================
+   VIDEO
+========================= */
+
+#hotspotVideo {
+
+    width: 100%;
+
+    max-height: 80vh;
+
+    background: black;
+
+    border-radius: 12px;
+
+    display: block;
+
+}
+
+
+/* =========================
+   CLOSE BUTTON
+========================= */
+
+.close-video {
+
+    position: absolute;
+
+    right: 0;
+
+    top: -50px;
+
+    width: 40px;
+
+    height: 40px;
+
+    border: none;
+
+    border-radius: 50%;
+
+    background: white;
+
+    color: black;
+
+    font-size: 20px;
+
+    font-weight: bold;
+
+    cursor: pointer;
+
+}
+
+
+/* =========================
+   MOBILE
+========================= */
 
 @media (max-width: 600px) {
 
-  .container {
+    .container {
 
-    padding: 12px;
+        padding: 12px;
 
-  }
+    }
 
-  .header h1 {
 
-    font-size: 24px;
+    .header h1 {
 
-  }
+        font-size: 24px;
 
-  model-viewer {
+    }
 
-    height: 450px;
 
-  }
+    model-viewer {
+
+        height: 450px;
+
+    }
+
+
+    .hotspot-dot {
+
+        width: 10px;
+
+        height: 10px;
+
+    }
+
+
+    .ar-button {
+
+        padding: 12px 20px;
+
+        font-size: 14px;
+
+    }
+
+
+    .video-container {
+
+        width: 95%;
+
+    }
 
 }

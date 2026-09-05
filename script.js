@@ -1,28 +1,196 @@
-const modelViewer = document.querySelector("#printerModel");
+/* =========================
+   GET ELEMENTS
+========================= */
+
+const modelViewer =
+    document.querySelector("#printerModel");
 
 
-// Model Loading Started
-
-modelViewer.addEventListener("load", () => {
-
-  console.log("3D Model Loaded Successfully");
-
-});
+const videoModal =
+    document.querySelector("#videoModal");
 
 
-// Model Error
-
-modelViewer.addEventListener("error", (event) => {
-
-  console.error("Error Loading Model:", event);
-
-});
+const hotspotVideo =
+    document.querySelector("#hotspotVideo");
 
 
-// AR Status
+const videoSource =
+    document.querySelector("#videoSource");
 
-modelViewer.addEventListener("ar-status", (event) => {
 
-  console.log("AR Status:", event.detail.status);
+const closeVideo =
+    document.querySelector("#closeVideo");
 
-});
+
+const hotspots =
+    document.querySelectorAll(".hotspot");
+
+
+
+/* =========================
+   MODEL LOADED
+========================= */
+
+modelViewer.addEventListener(
+    "load",
+    () => {
+
+        console.log(
+            "3D Model Loaded Successfully"
+        );
+
+    }
+);
+
+
+
+/* =========================
+   MODEL ERROR
+========================= */
+
+modelViewer.addEventListener(
+    "error",
+    (event) => {
+
+        console.error(
+            "3D Model Error:",
+            event
+        );
+
+    }
+);
+
+
+
+/* =========================
+   HOTSPOT CLICK
+========================= */
+
+hotspots.forEach(
+    (hotspot) => {
+
+        hotspot.addEventListener(
+            "click",
+            () => {
+
+                const videoPath =
+                    hotspot.dataset.video;
+
+
+                /* Stop old video */
+
+                hotspotVideo.pause();
+
+                hotspotVideo.currentTime = 0;
+
+
+                /* Set new video */
+
+                videoSource.src =
+                    videoPath;
+
+
+                /* Reload video */
+
+                hotspotVideo.load();
+
+
+                /* Open modal */
+
+                videoModal.classList.add(
+                    "show"
+                );
+
+
+                /* Play video */
+
+                hotspotVideo
+                    .play()
+                    .catch(
+                        (error) => {
+
+                            console.log(
+                                "Autoplay blocked:",
+                                error
+                            );
+
+                        }
+                    );
+
+            }
+        );
+
+    }
+);
+
+
+
+/* =========================
+   CLOSE VIDEO
+========================= */
+
+function closeVideoModal() {
+
+    hotspotVideo.pause();
+
+    hotspotVideo.currentTime = 0;
+
+
+    videoModal.classList.remove(
+        "show"
+    );
+
+}
+
+
+
+/* =========================
+   CLOSE BUTTON
+========================= */
+
+closeVideo.addEventListener(
+    "click",
+    closeVideoModal
+);
+
+
+
+/* =========================
+   CLICK OUTSIDE VIDEO
+========================= */
+
+videoModal.addEventListener(
+    "click",
+    (event) => {
+
+        if (
+            event.target === videoModal
+        ) {
+
+            closeVideoModal();
+
+        }
+
+    }
+);
+
+
+
+/* =========================
+   ESC KEY
+========================= */
+
+document.addEventListener(
+    "keydown",
+    (event) => {
+
+        if (
+            event.key === "Escape"
+        ) {
+
+            closeVideoModal();
+
+        }
+
+    }
+);
